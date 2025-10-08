@@ -6,15 +6,18 @@
 ‎import getpass
 ‎import requests as r, os, threading, random, click, fake_headers
 ‎from threading import Thread
-‎from colorama import Fade
 ‎from fake_headers import Headers
-‎
-‎def clear(): 
-‎	if os.name == 'nt': 
-‎		os.system('cls') 
-‎	
-‎os.system('clear')
-‎‎def logo()""" 
+‎os.system("clear")
+
+# Colors
+class bcolors:
+    KUN = '\033[95m'
+    FAYAKUN = "\033[37m"
+
+attemps = 0
+os.system("clear")
+print("""
+\033[37m
 ╔═════╗╔════╗
 ‎║▒╔══╗▒╔══╗▒║        
 ‎║▒║   ║▒║  ║▒║╔═╗   
@@ -24,16 +27,14 @@
 ║▒║   ╚════║▒║║▒║          
 ╚═╝    ╔═╗ ╚═╝║▒║
         ║▒╚════╝▒║
-        ╚════════╝033[0m/Nai
+        ╚════════╝
 ‎\033[96m╔════════════════════════════════════════════════╗
 ‎\033[96m║\033[34m BRIGADE ATTACKER SNIPER ELITE \033[96m║
 ‎\033[96m║\033[33m INTERNAL SCRIPT \033[96m║
 ‎\033[96m║\033[32m By: KF'99 \033[96m║
 ‎\033[96m║\033[95m ——o0o—— \033[96m║
 ‎\033[96m╚════════════════════════════════════════════════
-‎"""
-‎faded_text = fade.fire(logo)
-‎print(faded_text)
+‎""")
 ‎# Password authentication function
 ‎def authenticate():
 ‎password = "bas3" # The password to access the tool
