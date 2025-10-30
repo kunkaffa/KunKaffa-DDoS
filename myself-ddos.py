@@ -37,11 +37,13 @@ print("""
 ‎""")
 ‎‎# Password authentication function
 ‎def authenticate():
-‎password = "BASe" # The password to access the tool
-‎user_password = getpass.getpass(prompt="\033[1;36mEnter the password to access the tool: \033[0m")
-‎if user_password != password:
-‎print("\033[1;31mIncorrect password. Exiting...\033[0m")
-‎exit()
+    ‎password = "BASe" # The password to access the tool
+    ‎user_password = getpass.getpass(prompt="\033[1;36mEnter the password to access the tool: \033[0m")
+‎
+   if user_password != password:
+       ‎print("\033[1;31mIncorrect password. Exiting...\033[0m")
+       attemps += 1
+       ‎exit()
 ‎
 ‎def check_prox(array, url):
 ‎	ip = r.post("http://ip.beget.ru/").text
