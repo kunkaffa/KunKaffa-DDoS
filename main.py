@@ -71,7 +71,6 @@ def buildblock(size):
 
 def usage():
 	
-	print"
 
 #http request
 def httpcall(url):
