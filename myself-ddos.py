@@ -1,6 +1,6 @@
-‎#!/usr/bin/python3
+‎# !/usr/bin/python3
 ‎# -*- coding: utf-8 -*-
-‎import os
+import os
 import urllib2
 import sys
 import threading
