@@ -6,6 +6,13 @@ import sys
 import threading
 import random
 import re
+from colorama import Fore, Style, init
+
+# Inisialisasi colorama
+init(autoreset=True)
+
+def clear():
+    os.system("cls" if os.name == "nt" else "clear")
 
 #global params
 url=''
@@ -115,10 +122,10 @@ class MonitorThread(threading.Thread):
 		previous=request_counter
 		while flag==0:
 			if (previous+500<request_counter) & (previous<>request_counter):
-				print "%d D1MOD ATTACKED THE SERVER -->" % (request_counter)
+				print "%d ATTACKED THE SERVER -->" % (request_counter)
 				previous=request_counter
 		if flag==2:
-			print "\n-- D1MOD Attack Finished --"
+			print "\n-- Attack Finished --"
 
 
 if len(sys.argv) < 2:
@@ -129,7 +136,7 @@ else:
 		usage()
 		sys.exit()
 	else:
-		print "_<-- D1MOD ATTACK STARTED --->"
+		print "ATTACK STARTED"
 			if sys.argv[2]=="safe":
 				set_safe()
 		url = sys.argv[1]
