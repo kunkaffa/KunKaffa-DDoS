@@ -3,6 +3,7 @@
 import os
 import urllib2
 import sys
+import time
 import threading
 import random
 from colorama import Fore, Style, init
