@@ -93,8 +93,7 @@ def usage():
         Fore.WHITE + "    ████▒▒   ███▒▒   █▒▒██▒▒ █▒▒  ███▒▒   █▒▒ ██▒▒ █▒▒   █▒▒       █▒▒",
         Fore.YELLOW + "════════════════════════════════════════════════════════════════════════════",     
 	
-    for line in header_lines:
-        print(line)
+    
         time.sleep(0.0015)  # typing effect
 
 #http request
